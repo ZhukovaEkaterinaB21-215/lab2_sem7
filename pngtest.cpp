@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
 	// TODO: image processing 
 	//ImageProcessingGray(pOutputBits, pInputBits, nWidth, nHeight);
 	size_t n = 2;
-	FloydSteinberg(pOutputBits, pInputBits, nWidth, nHeight, n);
+	FloydSteinbergEvenOdd(pOutputBits, pInputBits, nWidth, nHeight, n);
 
 
 	if (NPngProc::writePngFile(szOutputFileName, pOutputBits, nWidth, nHeight, nBPP) == NPngProc::PNG_ERROR)
@@ -142,7 +142,7 @@ void FloydSteinberg(unsigned char* pOut
 {
 	int new_values[256];
 	for (int i = 0; i < 256; ++i) {
-		new_values[i] = int(int(i * (pow(2, n) - 1) / 255 + 0.5) * 255 / (pow(2, n) - 1));
+		new_values[i] = int(int(i * (1 << n - 1) / 255 + 0.5) * 255 / (1 << n - 1));
 	}
 	for (size_t y = 0; y < nHeight; ++y)
 	{
@@ -184,11 +184,11 @@ void FloydSteinbergEvenOdd(unsigned char* pOut
 {
 	int new_values[256];
 	for (int i = 0; i < 256; ++i) {
-		new_values[i] = int(int(i * (pow(2, n) - 1) / 255 + 0.5) * 255 / (pow(2, n) - 1));
+		new_values[i] = int(int(i * (1 << n - 1) / 255 + 0.5) * 255 / (1 << n - 1));
 	}
 	for (size_t y = 0; y < nHeight; ++y)
 	{
-		if (y % 2 == 0)
+		if (!(y&1))
 		{
 			for (size_t x = 0; x < nWidth; ++x)
 			{
@@ -198,57 +198,25 @@ void FloydSteinbergEvenOdd(unsigned char* pOut
 				pOut[numberPixel] = new_value;
 				if (y < nHeight - 1)
 				{
-					pIn[(y + 1) * nWidth + x] = pIn[(y + 1) * nWidth + x] + 5 * error_value / 16;
-					if (pIn[(y + 1) * nWidth + x] > 255)
-					{
-						pIn[(y + 1) * nWidth + x] = 255;
-					}
-					if (pIn[(y + 1) * nWidth + x] < 0)
-					{
-						pIn[(y + 1) * nWidth + x] = 0;
-					}
+					pIn[(y + 1) * nWidth + x] = max(0, min(255, pIn[(y + 1) * nWidth + x] + 5 * error_value / 16));
 					if (x < nWidth - 1)
 					{
-						pIn[(y + 1) * nWidth + x + 1] = pIn[(y + 1) * nWidth + x + 1] + 1 * error_value / 16;
-						if (pIn[(y + 1) * nWidth + x + 1] > 255)
-						{
-							pIn[(y + 1) * nWidth + x + 1] = 255;
-						}
-						if (pIn[(y + 1) * nWidth + x + 1] < 0)
-						{
-							pIn[(y + 1) * nWidth + x + 1] = 0;
-						}
+						pIn[(y + 1) * nWidth + x + 1] = max(0, min(255, pIn[(y + 1) * nWidth + x + 1] + 1 * error_value / 16));
 					}
 					if (x > 0)
 					{
-						pIn[(y + 1) * nWidth + x - 1] = pIn[(y + 1) * nWidth + x - 1] + 3 * error_value / 16;
-						if (pIn[(y + 1) * nWidth + x - 1] > 255)
-						{
-							pIn[(y + 1) * nWidth + x - 1] = 255;
-						}
-						if (pIn[(y + 1) * nWidth + x - 1] < 0)
-						{
-							pIn[(y + 1) * nWidth + x - 1] = 0;
-						}
+						pIn[(y + 1) * nWidth + x - 1] = max(0, min(255, pIn[(y + 1) * nWidth + x - 1] + 3 * error_value / 16));
 					}
 				}
 				if (x < nWidth - 1)
 				{
-					pIn[numberPixel + 1] = pIn[numberPixel + 1] + 7 * error_value / 16;
-					if (pIn[numberPixel + 1] > 255)
-					{
-						pIn[numberPixel + 1] = 255;
-					}
-					if (pIn[numberPixel + 1] < 0)
-					{
-						pIn[numberPixel + 1] = 0;
-					}
+					pIn[numberPixel + 1] = max(0, min(255, pIn[numberPixel + 1] + 7 * error_value / 16));
 				}
 			}
 		}
-		if (y % 2 == 1)
+		else
 		{
-			for (int x = nWidth-1; x >= 0; --x)
+			for (int x = nWidth - 1; x >= 0; --x)
 			{
 				size_t numberPixel = y * nWidth + x;
 				int new_value = new_values[pIn[numberPixel]];
@@ -256,51 +224,19 @@ void FloydSteinbergEvenOdd(unsigned char* pOut
 				pOut[numberPixel] = new_value;
 				if (y < nHeight - 1)
 				{
-					pIn[(y + 1) * nWidth + x] = pIn[(y + 1) * nWidth + x] + 5 * error_value / 16;
-					if (pIn[(y + 1) * nWidth + x] > 255)
-					{
-						pIn[(y + 1) * nWidth + x] = 255;
-					}
-					if (pIn[(y + 1) * nWidth + x] < 0)
-					{
-						pIn[(y + 1) * nWidth + x] = 0;
-					}
+					pIn[(y + 1) * nWidth + x] = max(0, min(255, pIn[(y + 1) * nWidth + x] + 5 * error_value / 16));
 					if (x > 0)
 					{
-						pIn[(y + 1) * nWidth + x - 1] = pIn[(y + 1) * nWidth + x - 1] + 1 * error_value / 16;
-						if (pIn[(y + 1) * nWidth + x - 1] > 255)
-						{
-							pIn[(y + 1) * nWidth + x - 1] = 255;
-						}
-						if (pIn[(y + 1) * nWidth + x - 1] < 0)
-						{
-							pIn[(y + 1) * nWidth + x - 1] = 0;
-						}
+						pIn[(y + 1) * nWidth + x - 1] = max(0, min(255, pIn[(y + 1) * nWidth + x - 1] + 1 * error_value / 16));
 					}
 					if (x < nWidth - 1)
 					{
-						pIn[(y + 1) * nWidth + x + 1] = pIn[(y + 1) * nWidth + x + 1] + 3 * error_value / 16;
-						if (pIn[(y + 1) * nWidth + x + 1] > 255)
-						{
-							pIn[(y + 1) * nWidth + x + 1] = 255;
-						}
-						if (pIn[(y + 1) * nWidth + x + 1] < 0)
-						{
-							pIn[(y + 1) * nWidth + x + 1] = 0;
-						}
+						pIn[(y + 1) * nWidth + x + 1] = max(0, min(255, pIn[(y + 1) * nWidth + x + 1] + 3 * error_value / 16));
 					}
 				}
 				if (x > 0)
 				{
-					pIn[numberPixel - 1] = pIn[numberPixel - 1] + 7 * error_value / 16;
-					if (pIn[numberPixel - 1] > 255)
-					{
-						pIn[numberPixel - 1] = 255;
-					}
-					if (pIn[numberPixel - 1] < 0)
-					{
-						pIn[numberPixel - 1] = 0;
-					}
+					pIn[numberPixel - 1] = max(0, min(255, pIn[numberPixel - 1] + 7 * error_value / 16));
 				}
 			}
 		}
@@ -317,7 +253,7 @@ void Stucki(unsigned char* pOut
 {
 	int new_values[256];
 	for (int i = 0; i < 256; ++i) {
-		new_values[i] = int(int(i * (pow(2, n) - 1) / 255 + 0.5) * 255 / (pow(2, n) - 1));
+		new_values[i] = int(int(i * (1 << n - 1) / 255 + 0.5) * 255 / (1 << n - 1));
 	}
 	for (size_t y = 0; y < nHeight; ++y)
 	{
